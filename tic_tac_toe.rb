@@ -5,16 +5,16 @@ class Player
     @symbol = symbol
   end
 
-  def get_move(input_name)
-    puts "\n#{name} Enter #{input_name}"
+  def get_move
+    puts "\n#{name} Enter Tile Choice"
     gets.chomp.to_i
   end
 
   def move
-    row = self.get_move("row")
-    column = self.get_move("column")
-    if @game.board[row][column] == "_"
-      @game.board[row][column] = symbol
+    move_choice = self.get_move.to_i - 1
+    if @game.board.flatten[move_choice] == "_" && move_choice >= 0
+      @game.board.flatten![move_choice] = symbol
+      @game.board = unflatten(@game.board, 3)
     else
       puts "\n Invalid Move Choice #{name}! Try Again!"
       self.move
@@ -23,6 +23,14 @@ class Player
 
   def add_game(game)
     @game = game
+  end
+
+  def unflatten(flat_array, sub_array_length)
+    unflattend_array = []
+    while flat_array.size >= sub_array_length do
+      unflattend_array.push(flat_array.slice!(0...sub_array_length))
+    end
+    unflattend_array
   end
 end
 
@@ -73,7 +81,7 @@ class Game
         player.move
         if self.game_over?(@board, player)
           self.print_board
-          p "\n #{player.name} Won!"
+          puts "\n #{player.name} Won!"
           @game_over = true
           break
         end
@@ -90,5 +98,10 @@ match.add_player(player_1)
 match.add_player(player_2)
 player_1.add_game(match)
 player_2.add_game(match)
+puts "Use the numbers 1-9 to pick a tile, ordered from top left to bottom right"
+puts "Like this: "
+p "1,2,3"
+p "4,5,6"
+p "7,8,9"
 match.play
 
