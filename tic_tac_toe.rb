@@ -31,7 +31,7 @@ class Game
 
   def initialize
     @game_over = false
-    @board = [['_','_','_'],['_','_','_'],['_','_','_']]
+    @board = [['_','_','_'], ['_','_','_'], ['_','_','_']]
     @players = []
   end
 
@@ -52,17 +52,31 @@ class Game
     @players.push(player)
   end
 
-  def check_for_game_over(board)
-    
+  def game_over?(board, player)
+    true if horizontal_win(board, player)
+    true if vertical_win(board, player)
+  end
+
+  def horizontal_win(board, player)
+    board.each { |row| return true if row.all? {|tile| tile == player.symbol}} 
+    false
+  end
+
+  def vertical_win(board, player)
+    horizontal_win(board.transpose, player)
   end
 
   def play
     until @game_over
       @players.each do |player|
         self.print_board
-
         player.move
-        break if @game_over
+        if self.game_over?(@board, player)
+          self.print_board
+          p "\n #{player.name} Won!"
+          @game_over = true
+          break
+        end
       end
     end
   end
