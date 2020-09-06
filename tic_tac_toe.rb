@@ -61,12 +61,20 @@ class Game
   end
 
   def game_over?(board, player)
-    true if horizontal_win(board, player)
-    true if vertical_win(board, player)
+    if horizontal_win(board, player) || 
+      vertical_win(board, player) || 
+      diagonal_win(board, player)
+    then
+      puts "\n #{player.name} Won!"
+      return true
+    elsif tie(board)
+      puts "\n Tie Game"
+      return true
+    end
   end
 
   def horizontal_win(board, player)
-    board.each { |row| return true if row.all? {|tile| tile == player.symbol}} 
+    board.each { |row| return true if all_match_symbol(row, player) }
     false
   end
 
@@ -74,14 +82,31 @@ class Game
     horizontal_win(board.transpose, player)
   end
 
+  def diagonal_win(board, player)
+    diag_1 = [board[0][0], board[1][1], board[2][2]]
+    diag_2 = [board[0][2], board[1][1], board[2][0]]
+    if all_match_symbol(diag_1, player) || all_match_symbol(diag_2, player)
+      return true
+    end
+  end
+
+  def tie(board)
+    if board.flatten.include?("_")
+      return false
+    end
+    true
+  end
+  
+  def all_match_symbol(array, player)
+    array.all? {|tile| tile == player.symbol}
+  end
   def play
     until @game_over
       @players.each do |player|
         self.print_board
         player.move
-        if self.game_over?(@board, player)
+        if game_over?(@board, player)
           self.print_board
-          puts "\n #{player.name} Won!"
           @game_over = true
           break
         end
