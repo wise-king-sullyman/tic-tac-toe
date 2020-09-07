@@ -1,48 +1,40 @@
 # frozen_string_literal: true
 
-# Player instances are the representations of each player
-class Player
-  attr_accessor :game, :name, :symbol
-  def initialize(name, symbol)
-    @name = name
-    @symbol = symbol
-  end
-
-  def move
-    puts "\n#{name} Enter Tile Choice"
-    move_choice = gets.chomp.to_i - 1
-    if valid_move?(move_choice)
-      update_board(move_choice)
-    else
-      puts "\n Invalid Move Choice #{name}! Try Again!"
-      move
-    end
-  end
-
-  def add_game(game)
-    @game = game
-  end
-
+# Module with one function, taking a flat array and making it "unflat"
+module Unflatten
   def unflatten(flat_array, sub_array_length)
     unflattend_array = []
     unflattend_array.push(flat_array.slice!(0...sub_array_length)) while \
     flat_array.size >= sub_array_length
     unflattend_array
   end
+end
 
-  def valid_move?(move_choice)
-    @game.board.flatten[move_choice] == '_' && move_choice >= 0
+# Player instances are the representations of each player
+class Player
+  attr_accessor :name, :symbol
+
+  def initialize(name, symbol, game)
+    @name = name
+    @symbol = symbol
+    @game = game
   end
 
-  def update_board(move_choice)
-    @game.board.flatten![move_choice] = symbol
-    @game.board = unflatten(@game.board, 3)
+  def move
+    puts "\n#{name} Enter Tile Choice"
+    move_choice = gets.chomp.to_i - 1
+    if @game.valid_move?(move_choice)
+      @game.update_board(move_choice, symbol)
+    else
+      puts "\n Invalid Move Choice #{name}! Try Again!"
+      move
+    end
   end
 end
 
 # Game instances are the representation of the current match being played
 class Game
-  attr_accessor :players, :board
+  include Unflatten
 
   def initialize
     @game_over = false
@@ -50,21 +42,42 @@ class Game
     @players = []
   end
 
-  def end
-    @game_over = true
+  def add_player(player)
+    @players.push(player)
   end
 
-  def end?
-    @game_over
+  def play
+    until @game_over
+      @players.each do |player|
+        print_board
+        player.move
+        next unless game_over?(@board, player)
+
+        print_board
+        end_game
+        break
+      end
+    end
+  end
+
+  def valid_move?(move_choice)
+    @board.flatten[move_choice] == '_' && move_choice >= 0
+  end
+
+  def update_board(move_choice, symbol)
+    @board.flatten![move_choice] = symbol
+    @board = unflatten(@board, 3)
+  end
+
+  private
+
+  def end_game
+    @game_over = true
   end
 
   def print_board
     puts "\n"
     @board.each { |i| p i }
-  end
-
-  def add_player(player)
-    @players.push(player)
   end
 
   def game_over?(board, player)
@@ -104,33 +117,28 @@ class Game
   def all_match_symbol(array, player)
     array.all? { |tile| tile == player.symbol }
   end
-
-  def play
-    until @game_over
-      @players.each do |player|
-        print_board
-        player.move
-        next unless game_over?(@board, player)
-
-        print_board
-        @game_over = true
-        break
-      end
-    end
-  end
 end
 
-first_player = Player.new('Player 1', 'X')
-second_player = Player.new('Player 2', 'O')
-match = Game.new
+quit_playing = false
 
-match.add_player(first_player)
-match.add_player(second_player)
-first_player.add_game(match)
-second_player.add_game(match)
-puts 'Use the numbers 1-9 to pick a tile, ordered from top left to bottom right'
-puts 'Like this: '
-p '1,2,3'
-p '4,5,6'
-p '7,8,9'
-match.play
+until quit_playing
+  match = Game.new
+  first_player = Player.new('Player 1', 'X', match)
+  second_player = Player.new('Player 2', 'O', match)
+
+  match.add_player(first_player)
+  match.add_player(second_player)
+
+  puts 'Use the numbers 1-9 to pick a tile, ordered from top left to bottom right'
+  puts 'Like this: '
+  p %w[1 2 3]
+  p %w[4 5 6]
+  p %w[7 8 9]
+
+  match.play
+
+  puts "\n Hit 'Enter' to Play again. Type 'stop' to quit."
+  next unless gets.chomp == 'stop'
+
+  quit_playing = true
+end
